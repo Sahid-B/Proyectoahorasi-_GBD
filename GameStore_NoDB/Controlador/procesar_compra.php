@@ -1,57 +1,41 @@
 <?php
 // GameStore_NoDB/Controlador/procesar_compra.php
-require_once '../Modelo/memoria.php';
 session_start();
+require_once '../Modelo/Database.php';
 
+// Verificar que el usuario esté logueado y sea una petición POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['id_usuario'])) {
-    header('Location: ../Vista/checkout.php');
+    header('Location: ../Vista/login.php');
     exit();
 }
 
-$user_id = $_SESSION['id_usuario'];
+// Verificar que el carrito no esté vacío
 $carrito = isset($_SESSION['carrito']) ? $_SESSION['carrito'] : [];
-
 if (empty($carrito)) {
-    header('Location: ../Vista/carrito.php');
+    header('Location: ../Vista/carrito.php?error=carrito_vacio');
     exit();
 }
 
-// Calculate total
+$id_usuario = $_SESSION['id_usuario'];
+$db = new Database();
+
+// Calcular el total
 $total = 0;
 foreach ($carrito as $item) {
     $total += $item['precio'] * $item['cantidad'];
 }
 
-// Create a new 'pedido' (order)
-$pedido_id = $_SESSION['db']['next_transaccion_id']++;
-$_SESSION['db']['transacciones'][$pedido_id] = [
-    'pedido_id' => $pedido_id,
-    'usuario_id' => $user_id,
-    'total' => $total,
-    'fecha' => date('Y-m-d H:i:s'),
-    // Storing shipping info directly in the order for simplicity
-    'nombre_completo' => $_POST['nombre_completo'],
-    'direccion' => $_POST['direccion'],
-    'telefono' => $_POST['telefono'],
-    'metodo_pago' => $_POST['metodo_pago']
-];
+// Procesar la compra usando el método de la base de datos
+$exito = $db->procesarCompra($id_usuario, $total, $carrito);
 
-// Create 'pedidos_detalles'
-foreach ($carrito as $id_juego => $item) {
-    $detalle_id = $_SESSION['db']['next_detalle_id']++;
-    $_SESSION['db']['detalle_transacciones'][$detalle_id] = [
-        'detalle_id' => $detalle_id,
-        'pedido_id' => $pedido_id,
-        'juego_id' => $id_juego,
-        'precio' => $item['precio'],
-        'cantidad' => $item['cantidad']
-    ];
+if ($exito) {
+    // Si la compra es exitosa, vaciar el carrito
+    $_SESSION['carrito'] = [];
+    // Redirigir a una página de confirmación
+    header("Location: ../Vista/mis_compras.php?exito=compra_realizada");
+} else {
+    // Si falla, redirigir al checkout con un error
+    header("Location: ../Vista/checkout.php?error=procesamiento_fallido");
 }
-
-// Clear the cart
-$_SESSION['carrito'] = [];
-
-// Redirect to confirmation page
-header("Location: ../Vista/confirmacion.php?pedido_id=" . $pedido_id);
 exit();
 ?>

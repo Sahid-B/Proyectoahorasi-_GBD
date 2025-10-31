@@ -1,7 +1,7 @@
 <?php
 // GameStore_NoDB/Vista/perfil.php
 session_start();
-require_once '../Modelo/memoria.php';
+require_once '../Modelo/Database.php';
 include 'header.php';
 
 // Proteger esta página
@@ -10,22 +10,23 @@ if (!isset($_SESSION['id_usuario'])) {
     exit();
 }
 
+$db = new Database();
 $user_id = $_SESSION['id_usuario'];
-$user_info = $_SESSION['db']['usuarios'][$user_id];
-
-// --- Estadísticas de Compras ---
-$total_compras = 0;
-$dinero_gastado = 0;
-foreach ($_SESSION['db']['transacciones'] as $transaccion) {
-    if ($transaccion['usuario_id'] == $user_id) {
-        $total_compras++;
-        $dinero_gastado += $transaccion['total'];
-    }
-}
+$user_info = $db->getUsuarioPorId($user_id);
+$user_stats = $db->getEstadisticasUsuario($user_id);
 ?>
 
 <div class="container mt-5">
     <h2>Mi Perfil</h2>
+
+    <!-- Mensajes de feedback -->
+    <?php if (isset($_GET['exito'])): ?>
+        <div class="alert alert-success"><?php echo htmlspecialchars($_GET['exito']); ?></div>
+    <?php endif; ?>
+    <?php if (isset($_GET['error'])): ?>
+        <div class="alert alert-danger"><?php echo htmlspecialchars($_GET['error']); ?></div>
+    <?php endif; ?>
+
     <div class="row">
         <div class="col-md-6">
             <h4>Información Actual</h4>
@@ -33,46 +34,29 @@ foreach ($_SESSION['db']['transacciones'] as $transaccion) {
             <p><strong>Email:</strong> <?php echo htmlspecialchars($user_info['correo']); ?></p>
 
             <h4 class="mt-4">Estadísticas</h4>
-            <p><strong>Total de Compras:</strong> <?php echo $total_compras; ?></p>
-            <p><strong>Dinero Gastado:</strong> $<?php echo number_format($dinero_gastado, 2); ?></p>
+            <p><strong>Total de Compras:</strong> <?php echo $user_stats['total_compras'] ?? 0; ?></p>
+            <p><strong>Dinero Gastado:</strong> $<?php echo number_format($user_stats['dinero_gastado'] ?? 0, 2); ?></p>
         </div>
         <div class="col-md-6">
             <h4>Editar Información</h4>
             <form action="../Controlador/usuario_acciones.php" method="post">
                 <input type="hidden" name="action" value="update_profile">
-                <div class="form-group mb-3">
-                    <label for="nombre">Nombre</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" value="<?php echo htmlspecialchars($user_info['nombre']); ?>">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="<?php echo htmlspecialchars($user_info['nombre']); ?>" required>
                 </div>
-                <div class="form-group mb-3">
-                    <label for="email">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_info['correo']); ?>">
+                <div class="mb-3">
+                    <label for="correo" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="correo" name="correo" value="<?php echo htmlspecialchars($user_info['correo']); ?>" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <div class="mb-3">
+                    <label for="contraseña" class="form-label">Nueva Contraseña (dejar en blanco para no cambiar)</label>
+                    <input type="password" class="form-control" id="contraseña" name="contraseña">
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Perfil</button>
             </form>
-            <button type="button" class="btn btn-secondary mt-3" data-bs-toggle="modal" data-bs-target="#passwordModal">
-                Cambiar Contraseña
-            </button>
         </div>
     </div>
-</div>
-
-<!-- Modal para cambiar contraseña -->
-<div class="modal fade" id="passwordModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Cambiar Contraseña</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>Esta funcionalidad aún no está implementada.</p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <?php include 'footer.php'; ?>

@@ -1,76 +1,69 @@
 <?php
+session_start();
 include 'header.php';
-require_once '../Modelo/memoria.php';
+require_once '../Modelo/Database.php';
 
-if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'cliente') {
+// Verificar que el usuario esté logueado
+if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
     exit();
 }
 
-$id_cliente = $_SESSION['id_usuario'];
-$historial = [];
-foreach ($_SESSION['db']['transacciones'] as $transaccion) {
-    if ($transaccion['id_cliente'] == $id_cliente) {
-        $detalles_completos = [];
-        foreach ($_SESSION['db']['detalle_transacciones'] as $detalle) {
-            if ($detalle['id_transaccion'] == $transaccion['id_transaccion']) {
-                $juego_info = $_SESSION['db']['juegos'][$detalle['id_juego']] ?? ['titulo' => 'Juego Eliminado'];
-                $detalle['titulo'] = $juego_info['titulo'];
-                $detalles_completos[] = $detalle;
-            }
-        }
-        $transaccion['detalles'] = $detalles_completos;
-        $historial[$transaccion['id_transaccion']] = $transaccion;
-    }
-}
-krsort($historial);
+$db = new Database();
+$id_usuario = $_SESSION['id_usuario'];
+$transacciones = $db->getTransaccionesPorUsuario($id_usuario);
+
 ?>
+<div class="container mt-5">
+    <h1 class="mb-4">Mi Historial de Compras</h1>
 
-<h1 class="mb-4">Mi Historial de Compras</h1>
+    <?php if (isset($_GET['exito']) && $_GET['exito'] === 'compra_realizada'): ?>
+        <div class="alert alert-success">¡Gracias por tu compra! Tu pedido ha sido procesado.</div>
+    <?php endif; ?>
 
-<?php if (isset($_GET['compra']) && $_GET['compra'] === 'exitosa'): ?>
-    <div class="alert alert-success">¡Gracias por tu compra! Tu pedido ha sido procesado.</div>
-<?php endif; ?>
-
-<?php if (empty($historial)): ?>
-    <div class="card card-body text-center"><p class="mb-0">Aún no has realizado ninguna compra.</p></div>
-<?php else: ?>
-    <div class="accordion" id="accordionCompras">
-        <?php foreach ($historial as $id_transaccion => $transaccion): ?>
-            <div class="card mb-2">
-                <div class="card-header" id="heading-<?php echo $id_transaccion; ?>">
-                    <h2 class="mb-0">
-                        <button class="btn btn-link btn-block text-start collapsed text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?php echo $id_transaccion; ?>">
-                            Transacción #<?php echo $id_transaccion; ?> |
-                            Fecha: <?php echo date('d/m/Y', strtotime($transaccion['fecha'])); ?> |
-                            <span class="text-neon">Total: $<?php echo number_format($transaccion['total'], 2); ?></span>
+    <?php if (empty($transacciones)): ?>
+        <div class="card card-body text-center"><p class="mb-0">Aún no has realizado ninguna compra.</p></div>
+    <?php else: ?>
+        <div class="accordion" id="accordionCompras">
+            <?php foreach ($transacciones as $transaccion):
+                $detalles = $db->getDetallesTransaccion($transaccion['id_transaccion']);
+            ?>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-<?php echo $transaccion['id_transaccion']; ?>">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<?php echo $transaccion['id_transaccion']; ?>">
+                            Transacción #<?php echo $transaccion['id_transaccion']; ?> |
+                            Fecha: <?php echo date('d/m/Y H:i', strtotime($transaccion['fecha'])); ?> |
+                            <span class="fw-bold ms-2">Total: $<?php echo number_format($transaccion['total'], 2); ?></span>
                         </button>
                     </h2>
-                </div>
-                <div id="collapse-<?php echo $id_transaccion; ?>" class="collapse" data-bs-parent="#accordionCompras">
-                    <div class="card-body">
-                        <table class="table">
-                            <thead><tr><th>Juego</th><th>Cantidad</th><th class="text-end">Subtotal</th></tr></thead>
-                            <tbody>
-                                <?php foreach ($transaccion['detalles'] as $detalle): ?>
+                    <div id="collapse-<?php echo $transaccion['id_transaccion']; ?>" class="accordion-collapse collapse" data-bs-parent="#accordionCompras">
+                        <div class="accordion-body">
+                            <table class="table table-sm">
+                                <thead>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($detalle['titulo']); ?></td>
-                                        <td><?php echo $detalle['cantidad']; ?></td>
-                                        <td class="text-end text-neon">$<?php echo number_format($detalle['subtotal'], 2); ?></td>
+                                        <th>Juego</th>
+                                        <th>Cantidad</th>
+                                        <th class="text-end">Precio Unitario</th>
+                                        <th class="text-end">Subtotal</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($detalles as $detalle): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($detalle['titulo']); ?></td>
+                                            <td><?php echo $detalle['cantidad']; ?></td>
+                                            <td class="text-end">$<?php echo number_format($detalle['precio_unitario'], 2); ?></td>
+                                            <td class="text-end fw-bold">$<?php echo number_format($detalle['precio_unitario'] * $detalle['cantidad'], 2); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-<?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
 
 <?php include 'footer.php'; ?>
-<style>
-.accordion .card { border: 1px solid var(--card-border); }
-.accordion .btn-link { text-decoration: none; font-weight: 600; width: 100%; }
-.text-neon { color: var(--neon-accent); font-weight: bold; }
-</style>

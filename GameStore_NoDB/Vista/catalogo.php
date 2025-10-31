@@ -1,16 +1,18 @@
 <?php
 // GameStore_NoDB/Vista/catalogo.php
-require_once '../Modelo/memoria.php';
 session_start();
+require_once '../Modelo/Database.php';
 include 'header.php';
 
-// --- Filtering and Sorting Logic ---
-$juegos = $_SESSION['db']['juegos'];
+$db = new Database();
 
-// Get unique genres for the filter dropdown
-$generos = array_unique(array_column($juegos, 'genero'));
+// --- Obtener datos iniciales ---
+$juegos = $db->getJuegos();
+$generos = $db->getGeneros();
 
-// Filter by search term
+// --- Lógica de filtrado y ordenación ---
+
+// Filtrar por término de búsqueda
 $busqueda = isset($_GET['busqueda']) ? strtolower(trim($_GET['busqueda'])) : '';
 if ($busqueda) {
     $juegos = array_filter($juegos, function($juego) use ($busqueda) {
@@ -18,7 +20,7 @@ if ($busqueda) {
     });
 }
 
-// Filter by genre
+// Filtrar por género
 $genero_filtro = isset($_GET['genero']) ? $_GET['genero'] : '';
 if ($genero_filtro) {
     $juegos = array_filter($juegos, function($juego) use ($genero_filtro) {
@@ -26,7 +28,7 @@ if ($genero_filtro) {
     });
 }
 
-// Sort results
+// Ordenar resultados
 $orden = isset($_GET['orden']) ? $_GET['orden'] : 'nombre_asc';
 usort($juegos, function($a, $b) use ($orden) {
     switch ($orden) {
@@ -42,10 +44,10 @@ usort($juegos, function($a, $b) use ($orden) {
     }
 });
 
-// --- Pagination Logic ---
+// --- Lógica de paginación ---
 $juegos_por_pagina = 12;
 $total_juegos = count($juegos);
-$total_paginas = ceil($total_juegos / $juegos_por_pagina);
+$total_paginas = $total_juegos > 0 ? ceil($total_juegos / $juegos_por_pagina) : 1;
 $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
 $pagina_actual = max(1, min($pagina_actual, $total_paginas));
 $offset = ($pagina_actual - 1) * $juegos_por_pagina;
@@ -56,7 +58,7 @@ $juegos_en_pagina = array_slice($juegos, $offset, $juegos_por_pagina);
     <h2>Catálogo de Juegos</h2>
     <p class="text-muted">Se encontraron <?php echo $total_juegos; ?> juegos.</p>
 
-    <!-- Filter and Sort Form -->
+    <!-- Formulario de filtro y ordenación -->
     <form action="catalogo.php" method="GET" class="mb-4 p-3 bg-light border rounded">
         <div class="row g-3">
             <div class="col-md-4">
@@ -89,26 +91,38 @@ $juegos_en_pagina = array_slice($juegos, $offset, $juegos_por_pagina);
         </div>
     </form>
 
-    <!-- Games Grid -->
+    <!-- Cuadrícula de juegos -->
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        <?php foreach ($juegos_en_pagina as $juego): ?>
-            <div class="col">
-                <div class="card h-100">
-                    <img src="<?php echo htmlspecialchars($juego['image']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($juego['titulo']); ?>">
-                    <div class="card-body">
-                        <h5 class="card-title"><?php echo htmlspecialchars($juego['titulo']); ?></h5>
-                        <p class="card-text text-muted"><?php echo htmlspecialchars($juego['genero']); ?></p>
-                        <p class="card-text h4">$<?php echo number_format($juego['precio'], 2); ?></p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="detalle_juego.php?id=<?php echo $juego['id_juego']; ?>" class="btn btn-secondary w-100">Ver Detalles</a>
+        <?php if (empty($juegos_en_pagina)): ?>
+            <div class="col-12">
+                <p class="text-center">No se encontraron juegos que coincidan con los filtros.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach ($juegos_en_pagina as $juego): ?>
+                <div class="col">
+                    <div class="card h-100">
+                        <a href="detalle_juego.php?id=<?php echo $juego['id_juego']; ?>">
+                            <img src="<?php echo htmlspecialchars($juego['imagen']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($juego['titulo']); ?>">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title"><?php echo htmlspecialchars($juego['titulo']); ?></h5>
+                            <p class="card-text text-muted"><?php echo htmlspecialchars($juego['genero']); ?></p>
+                            <p class="card-text h4">$<?php echo number_format($juego['precio'], 2); ?></p>
+                        </div>
+                        <div class="card-footer">
+                            <form action="../Controlador/carrito_acciones.php" method="post">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="id_juego" value="<?php echo $juego['id_juego']; ?>">
+                                <button type="submit" class="btn btn-primary w-100">Añadir al Carrito</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 
-    <!-- Pagination -->
+    <!-- Paginación -->
     <nav aria-label="Page navigation" class="mt-5">
         <ul class="pagination justify-content-center">
             <?php for ($i = 1; $i <= $total_paginas; $i++): ?>

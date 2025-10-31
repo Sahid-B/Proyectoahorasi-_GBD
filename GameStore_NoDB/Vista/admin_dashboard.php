@@ -1,7 +1,7 @@
 <?php
 // GameStore_NoDB/Vista/admin_dashboard.php
 session_start();
-require_once '../Modelo/memoria.php';
+require_once '../Modelo/Database.php';
 
 // Proteger esta página
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
@@ -11,17 +11,8 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
 
 include 'header.php';
 
-// --- Estadísticas ---
-$total_ventas = array_sum(array_column($_SESSION['db']['transacciones'], 'total'));
-$total_juegos = count($_SESSION['db']['juegos']);
-$total_usuarios = count($_SESSION['db']['usuarios']);
-$ventas_hoy = 0;
-foreach ($_SESSION['db']['transacciones'] as $transaccion) {
-    if (date('Y-m-d', strtotime($transaccion['fecha'])) === date('Y-m-d')) {
-        $ventas_hoy += $transaccion['total'];
-    }
-}
-$ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 0, 5);
+$db = new Database();
+$stats = $db->getEstadisticasAdmin();
 ?>
 
 <div class="container mt-5">
@@ -33,7 +24,7 @@ $ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 
             <div class="card text-white bg-primary mb-3">
                 <div class="card-header">Total de Ventas</div>
                 <div class="card-body">
-                    <h5 class="card-title">$<?php echo number_format($total_ventas, 2); ?></h5>
+                    <h5 class="card-title">$<?php echo number_format($stats['total_ventas'] ?? 0, 2); ?></h5>
                 </div>
             </div>
         </div>
@@ -41,7 +32,7 @@ $ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 
             <div class="card text-white bg-success mb-3">
                 <div class="card-header">Total de Juegos</div>
                 <div class="card-body">
-                    <h5 class="card-title"><?php echo $total_juegos; ?></h5>
+                    <h5 class="card-title"><?php echo $stats['total_juegos'] ?? 0; ?></h5>
                 </div>
             </div>
         </div>
@@ -49,7 +40,7 @@ $ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 
             <div class="card text-white bg-info mb-3">
                 <div class="card-header">Total de Usuarios</div>
                 <div class="card-body">
-                    <h5 class="card-title"><?php echo $total_usuarios; ?></h5>
+                    <h5 class="card-title"><?php echo $stats['total_usuarios'] ?? 0; ?></h5>
                 </div>
             </div>
         </div>
@@ -57,7 +48,7 @@ $ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 
             <div class="card text-white bg-warning mb-3">
                 <div class="card-header">Ventas de Hoy</div>
                 <div class="card-body">
-                    <h5 class="card-title">$<?php echo number_format($ventas_hoy, 2); ?></h5>
+                    <h5 class="card-title">$<?php echo number_format($stats['ventas_hoy'] ?? 0, 2); ?></h5>
                 </div>
             </div>
         </div>
@@ -73,19 +64,23 @@ $ultimas_compras = array_slice(array_reverse($_SESSION['db']['transacciones']), 
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($ultimas_compras as $compra): ?>
-                <tr>
-                    <td><?php echo $compra['fecha']; ?></td>
-                    <td><?php echo htmlspecialchars($_SESSION['db']['usuarios'][$compra['usuario_id']]['nombre']); ?></td>
-                    <td>$<?php echo number_format($compra['total'], 2); ?></td>
-                </tr>
-            <?php endforeach; ?>
+            <?php if (empty($stats['ultimas_compras'])): ?>
+                <tr><td colspan="3" class="text-center">No hay compras recientes.</td></tr>
+            <?php else: ?>
+                <?php foreach ($stats['ultimas_compras'] as $compra): ?>
+                    <tr>
+                        <td><?php echo $compra['fecha']; ?></td>
+                        <td><?php echo htmlspecialchars($compra['nombre_usuario']); ?></td>
+                        <td>$<?php echo number_format($compra['total'], 2); ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </tbody>
     </table>
 
     <h3 class="mt-4">Enlaces Rápidos</h3>
     <a href="admin_usuarios.php" class="btn btn-secondary">Gestionar Usuarios</a>
-    <a href="catalogo.php" class="btn btn-secondary">Gestionar Juegos</a>
+    <a href="panel.php" class="btn btn-secondary">Gestionar Juegos</a>
 </div>
 
 <?php include 'footer.php'; ?>

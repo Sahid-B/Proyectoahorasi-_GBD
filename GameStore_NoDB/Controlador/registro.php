@@ -1,32 +1,32 @@
 <?php
 // GameStore_NoDB/Controlador/registro.php
-require_once '../Modelo/memoria.php';
+session_start();
+require_once '../Modelo/Database.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = $_POST['nombre'];
     $correo = $_POST['correo'];
     $contraseña = $_POST['contraseña'];
-    $rol = $_POST['rol'];
+    $rol = $_POST['rol']; // 'cliente' o 'vendedor'
 
-    // Check if email already exists
-    foreach ($_SESSION['db']['usuarios'] as $usuario) {
-        if ($usuario['correo'] === $correo) {
-            header("Location: ../Vista/registro.php?error=correo_existente");
-            exit();
-        }
+    $db = new Database();
+
+    // 1. Verificar si el correo ya existe
+    $usuarioExistente = $db->getUsuarioPorCorreo($correo);
+    if ($usuarioExistente) {
+        header("Location: ../Vista/registro.php?error=correo_existente");
+        exit();
     }
 
-    // Add new user
-    $id = $_SESSION['db']['next_user_id']++;
-    $_SESSION['db']['usuarios'][$id] = [
-        'id_usuario' => $id,
-        'nombre' => $nombre,
-        'correo' => $correo,
-        'contraseña' => password_hash($contraseña, PASSWORD_DEFAULT),
-        'rol' => $rol,
-    ];
+    // 2. Crear el nuevo usuario
+    $exito = $db->crearUsuario($nombre, $correo, $contraseña, $rol);
 
-    header("Location: ../Vista/login.php?registro=exitoso");
-    exit();
+    if ($exito) {
+        header("Location: ../Vista/login.php?registro=exitoso");
+        exit();
+    } else {
+        header("Location: ../Vista/registro.php?error=desconocido");
+        exit();
+    }
 }
 ?>
