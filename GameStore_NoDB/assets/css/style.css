@@ -1,0 +1,129 @@
+/* GameStore+ Modern Minimalist Stylesheet */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+:root {
+    --bg-color: #1a1a2e;
+    --primary-color: #16213e;
+    --secondary-color: #0f3460;
+    --accent-color: #537895;
+    --neon-accent: #e94560;
+    --text-color: #dcdcdc;
+    --font-family: 'Poppins', sans-serif;
+    --card-bg: #1e1e3f;
+    --card-border: rgba(233, 69, 96, 0.3);
+    --input-bg: #2a2a4a;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding-top: 70px; /* Adjust for fixed navbar */
+    transition: background-color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: #fff;
+}
+
+/* --- Navigation Bar --- */
+.navbar {
+    background-color: var(--primary-color) !important;
+    border-bottom: 2px solid var(--neon-accent);
+    padding: 1rem 0;
+}
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+.nav-link {
+    font-weight: 600;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+.nav-link:hover {
+    color: var(--neon-accent) !important;
+    transform: translateY(-2px);
+}
+
+/* --- Buttons --- */
+.btn-primary {
+    background-color: var(--neon-accent);
+    border: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn-primary:hover {
+    background-color: #ff5c7a;
+    transform: scale(1.05);
+}
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border: 1px solid var(--accent-color);
+}
+
+/* --- Forms & Inputs --- */
+.form-control, .form-select {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+.form-control:focus, .form-select:focus {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border-color: var(--neon-accent);
+    box-shadow: 0 0 10px var(--card-border);
+}
+.form-label {
+    font-weight: 600;
+}
+
+/* --- Tables --- */
+.table {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table thead {
+    background-color: var(--primary-color);
+}
+.table th, .table td {
+    border-color: var(--secondary-color);
+}
+
+/* --- Cards --- */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+.card-body {
+    padding: 1.5rem;
+}
+.card-header, .card-footer {
+    background-color: var(--primary-color);
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+/* --- Utility & Animations --- */
+.container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--primary-color); }
+::-webkit-scrollbar-thumb { background: var(--neon-accent); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ff5c7a; }

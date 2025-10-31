@@ -1,0 +1,98 @@
+/* GameStore+/assets/css/estilos.css */
+
+/* --- Colores y Fuentes --- */
+:root {
+    --bg-dark: #1e293b;
+    --primary-accent: #f43f5e; /* Rosa/Rojo */
+    --light-text: #e2e8f0;
+    --placeholder-text: #94a3b8;
+    --card-bg: #334155;
+    --border-color: #475569;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--light-text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* --- Header y Footer --- */
+.navbar {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+.navbar-brand, .nav-link {
+    color: var(--light-text) !important;
+}
+.footer {
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem 0;
+    text-align: center;
+    margin-top: auto;
+}
+
+.main-content {
+    padding-top: 80px; /* Compensar la barra de navegación fija */
+}
+
+/* --- Botones --- */
+.btn-primary {
+    background-color: var(--primary-accent);
+    border-color: var(--primary-accent);
+}
+.btn-primary:hover {
+    background-color: #ef4444; /* Un poco más oscuro */
+    border-color: #ef4444;
+}
+
+/* --- Formularios --- */
+.form-control, .form-select {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-color);
+    color: var(--light-text);
+}
+.form-control::placeholder {
+    color: var(--placeholder-text);
+}
+.form-control:focus, .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: var(--primary-accent);
+    box-shadow: 0 0 0 0.25rem rgba(244, 63, 94, 0.25);
+    color: var(--light-text);
+}
+
+/* --- Cards de Juegos --- */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Responsive Grid --- */
+/* Desktop: 4 columnas (por defecto en bootstrap .row-cols-lg-4) */
+/* Tablet: 3 columnas */
+@media (max-width: 992px) {
+    .row-cols-md-3 > * {
+        flex: 0 0 auto;
+        width: 33.33333333%;
+    }
+}
+/* Tablet pequeña: 2 columnas */
+@media (max-width: 768px) {
+    .row-cols-sm-2 > * {
+        flex: 0 0 auto;
+        width: 50%;
+    }
+}
+/* Mobile: 1 columna */
+@media (max-width: 576px) {
+    .row-cols-1 > * {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
